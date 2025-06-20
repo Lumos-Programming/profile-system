@@ -1,28 +1,37 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Users, MessageSquare, Github, Instagram, Twitter, ExternalLink } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Users, Search, MessageSquare, Github, LinkIcon, Calendar } from "lucide-react"
+import ReactMarkdown from "react-markdown"
 
 interface Member {
   id: string
   name: string
   nickname: string
   department: string
-  bio: string
+  year: string
   roles: string[]
+  bio: string
+  avatar?: string
   accounts: {
-    discord?: string
-    github?: string
-    instagram?: string
-    twitter?: string
+    line: boolean
+    discord: boolean
+    github: boolean
   }
-  links: Array<{ title: string; url: string }>
+  links: Array<{
+    title: string
+    url: string
+  }>
+  events: Array<{
+    name: string
+    date: string
+    status: "upcoming" | "completed"
+  }>
 }
 
 const mockMembers: Member[] = [
@@ -31,15 +40,26 @@ const mockMembers: Member[] = [
     name: "田中 太郎",
     nickname: "たなたろ",
     department: "情報工学部",
-    bio: "プログラミングが好きな2年生です！Webアプリ開発に興味があります。",
-    roles: ["2年生", "Web班", "副代表"],
-    accounts: {
-      discord: "tanaka#1234",
-      github: "tanaka-dev",
-    },
+    year: "2年生",
+    roles: ["Web班", "副代表"],
+    bio: `# 自己紹介
+
+プログラミングが好きな2年生です！
+
+## 興味のある分野
+- **Webアプリ開発**
+- **機械学習**
+- **UI/UXデザイン**
+
+よろしくお願いします！ 🚀`,
+    accounts: { line: true, discord: true, github: true },
     links: [
       { title: "個人ブログ", url: "https://tanaka-blog.com" },
       { title: "ポートフォリオ", url: "https://tanaka-portfolio.dev" },
+    ],
+    events: [
+      { name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" },
+      { name: "冬合宿", date: "2024-02-10", status: "completed" },
     ],
   },
   {
@@ -47,49 +67,74 @@ const mockMembers: Member[] = [
     name: "佐藤 花子",
     nickname: "さとはな",
     department: "経済学部",
-    bio: "イベント企画が得意です！みんなで楽しいことをしましょう🎉",
-    roles: ["3年生", "イベント班", "代表"],
-    accounts: {
-      discord: "hanako#5678",
-      instagram: "sato_hanako",
-    },
-    links: [{ title: "Instagram", url: "https://instagram.com/sato_hanako" }],
+    year: "3年生",
+    roles: ["イベント班", "代表"],
+    bio: "イベント企画が大好きです！みんなで楽しい思い出を作りましょう✨",
+    accounts: { line: true, discord: true, github: false },
+    links: [],
+    events: [{ name: "文化祭出展準備", date: "2024-05-01", status: "upcoming" }],
   },
   {
     id: "3",
     name: "山田 次郎",
     nickname: "やまじ",
     department: "理学部",
-    bio: "数学とプログラミングの融合に興味があります。競技プログラミングもやってます！",
-    roles: ["1年生", "Web班"],
-    accounts: {
-      discord: "yamaji#9999",
-      github: "yamada-jiro",
-      twitter: "yamaji_math",
-    },
-    links: [
-      { title: "AtCoder", url: "https://atcoder.jp/users/yamaji" },
-      { title: "数学ブログ", url: "https://yamaji-math.blog" },
-    ],
+    year: "1年生",
+    roles: ["新入生"],
+    bio: "新入生です！よろしくお願いします🌟",
+    accounts: { line: true, discord: true, github: false },
+    links: [],
+    events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
+  },
+  {
+    id: "4",
+    name: "鈴木 一郎",
+    nickname: "すずいち",
+    department: "情報工学部",
+    year: "1年生",
+    roles: ["新入生"],
+    bio: "プログラミング初心者ですが、頑張ります！",
+    accounts: { line: true, discord: true, github: true },
+    links: [],
+    events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
+  },
+  {
+    id: "5",
+    name: "高橋 美咲",
+    nickname: "みさき",
+    department: "経済学部",
+    year: "2年生",
+    roles: ["広報班"],
+    bio: "SNS運用とデザインが得意です📱",
+    accounts: { line: true, discord: true, github: false },
+    links: [{ title: "Instagram", url: "https://instagram.com/misaki" }],
+    events: [],
+  },
+  {
+    id: "6",
+    name: "伊藤 健太",
+    nickname: "けんた",
+    department: "情報工学部",
+    year: "4年生",
+    roles: ["4年生", "技術顧問"],
+    bio: "卒業研究でAI開発をしています。技術的な質問はお気軽に！",
+    accounts: { line: true, discord: true, github: true },
+    links: [{ title: "研究室ページ", url: "https://lab.example.com" }],
+    events: [],
   },
 ]
 
 export default function MemberList() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedRole, setSelectedRole] = useState<string>("all")
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("all")
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
 
-  const allRoles = Array.from(new Set(mockMembers.flatMap((member) => member.roles)))
-  const allDepartments = Array.from(new Set(mockMembers.map((member) => member.department)))
-
-  const filteredMembers = mockMembers.filter((member) => {
-    const matchesSearch =
-      member.name.includes(searchTerm) || member.nickname.includes(searchTerm) || member.bio.includes(searchTerm)
-    const matchesRole = selectedRole === "all" || member.roles.includes(selectedRole)
-    const matchesDepartment = selectedDepartment === "all" || member.department === selectedDepartment
-
-    return matchesSearch && matchesRole && matchesDepartment
-  })
+  const filteredMembers = mockMembers.filter(
+    (member) =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.roles.some((role) => role.toLowerCase().includes(searchTerm.toLowerCase())),
+  )
 
   return (
     <div className="space-y-6">
@@ -98,143 +143,52 @@ export default function MemberList() {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="w-5 h-5 text-indigo-600" />
-            メンバー検索
+            メンバー一覧
           </CardTitle>
+          <CardDescription>サークルメンバーのプロフィールを確認できます</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="名前、ニックネーム、自己紹介で検索..."
+              placeholder="名前、ニックネーム、学部、ロールで検索..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 rounded-lg"
             />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">ロール</label>
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {allRoles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">学部</label>
-              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                <SelectTrigger className="rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">すべて</SelectItem>
-                  {allDepartments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
-      {/* メンバー一覧 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* メンバーカード一覧 */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {filteredMembers.map((member) => (
           <Card
             key={member.id}
-            className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-shadow"
+            className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all cursor-pointer hover:scale-105"
+            onClick={() => setSelectedMember(member)}
           >
-            <CardHeader className="pb-3">
-              <div className="flex items-start gap-3">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={`/placeholder.svg?height=48&width=48`} />
-                  <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-purple-400 text-white">
-                    {member.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-lg truncate">{member.name}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">@{member.nickname}</p>
-                  <p className="text-sm text-gray-500">{member.department}</p>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* ロール */}
-              <div className="flex flex-wrap gap-1">
-                {member.roles.map((role) => (
-                  <Badge key={role} variant="secondary" className="text-xs">
+            <CardContent className="p-4 text-center">
+              <Avatar className="w-12 h-12 mx-auto mb-3">
+                <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-purple-400 text-white">
+                  {member.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <h3 className="font-medium text-sm truncate mb-1">{member.name}</h3>
+              <p className="text-xs text-gray-600 mb-2">@{member.nickname}</p>
+              <div className="flex flex-wrap gap-1 justify-center">
+                {member.roles.slice(0, 2).map((role) => (
+                  <Badge key={role} variant="secondary" className="text-xs px-1 py-0">
                     {role}
                   </Badge>
                 ))}
-              </div>
-
-              {/* 自己紹介 */}
-              <p className="text-sm text-gray-700 line-clamp-3">{member.bio}</p>
-
-              {/* アカウント連携 */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {member.accounts.discord && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 bg-indigo-50 px-2 py-1 rounded-full">
-                    <MessageSquare className="w-3 h-3" />
-                    {member.accounts.discord}
-                  </div>
-                )}
-                {member.accounts.github && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-full">
-                    <Github className="w-3 h-3" />
-                    {member.accounts.github}
-                  </div>
-                )}
-                {member.accounts.instagram && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 bg-pink-50 px-2 py-1 rounded-full">
-                    <Instagram className="w-3 h-3" />
-                    {member.accounts.instagram}
-                  </div>
-                )}
-                {member.accounts.twitter && (
-                  <div className="flex items-center gap-1 text-xs text-gray-600 bg-blue-50 px-2 py-1 rounded-full">
-                    <Twitter className="w-3 h-3" />
-                    {member.accounts.twitter}
-                  </div>
+                {member.roles.length > 2 && (
+                  <Badge variant="secondary" className="text-xs px-1 py-0">
+                    +{member.roles.length - 2}
+                  </Badge>
                 )}
               </div>
-
-              {/* リンク */}
-              {member.links.length > 0 && (
-                <div className="space-y-1">
-                  {member.links.map((link, index) => (
-                    <Button
-                      key={index}
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto p-2 justify-start text-left w-full"
-                      asChild
-                    >
-                      <a href={link.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="w-3 h-3 mr-2 flex-shrink-0" />
-                        <span className="truncate text-xs">{link.title}</span>
-                      </a>
-                    </Button>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}
@@ -249,6 +203,138 @@ export default function MemberList() {
           </CardContent>
         </Card>
       )}
+
+      {/* メンバー詳細ダイアログ */}
+      <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedMember && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-4 mb-4">
+                  <Avatar className="w-16 h-16">
+                    <AvatarImage src={selectedMember.avatar || "/placeholder.svg"} />
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-purple-400 text-white text-xl">
+                      {selectedMember.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <DialogTitle className="text-xl">{selectedMember.name}</DialogTitle>
+                    <DialogDescription className="text-base">@{selectedMember.nickname}</DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* 基本情報 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-800">学部</h4>
+                    <p className="text-sm text-gray-600">{selectedMember.department}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-800">学年</h4>
+                    <p className="text-sm text-gray-600">{selectedMember.year}</p>
+                  </div>
+                </div>
+
+                {/* ロール */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-800">ロール</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedMember.roles.map((role) => (
+                      <Badge key={role} variant="secondary">
+                        {role}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 自己紹介 */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-800">自己紹介</h4>
+                  <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
+                    <ReactMarkdown>{selectedMember.bio}</ReactMarkdown>
+                  </div>
+                </div>
+
+                {/* 連携アカウント */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-800">連携アカウント</h4>
+                  <div className="flex gap-3">
+                    {selectedMember.accounts.line && (
+                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">LINE</span>
+                      </div>
+                    )}
+                    {selectedMember.accounts.discord && (
+                      <div className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
+                        <MessageSquare className="w-4 h-4 text-indigo-600" />
+                        <span className="text-sm">Discord</span>
+                      </div>
+                    )}
+                    {selectedMember.accounts.github && (
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <Github className="w-4 h-4 text-gray-700" />
+                        <span className="text-sm">GitHub</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* リンク */}
+                {selectedMember.links.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-800">お気に入りリンク</h4>
+                    <div className="space-y-2">
+                      {selectedMember.links.map((link, index) => (
+                        <a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
+                          <LinkIcon className="w-4 h-4 text-gray-600" />
+                          <span className="text-sm font-medium">{link.title}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 参加イベント */}
+                {selectedMember.events.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-gray-800">参加イベント</h4>
+                    <div className="space-y-2">
+                      {selectedMember.events.map((event, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-600" />
+                            <div>
+                              <p className="text-sm font-medium">{event.name}</p>
+                              <p className="text-xs text-gray-600">{event.date}</p>
+                            </div>
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className={
+                              event.status === "upcoming" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                            }
+                          >
+                            {event.status === "upcoming" ? "参加予定" : "参加済み"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
