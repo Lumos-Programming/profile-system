@@ -80,7 +80,7 @@ const mockMembers: Member[] = [
     year: "3年生",
     roles: ["イベント班", "代表"],
     bio: "イベント企画が大好きです！みんなで楽しい思い出を作りましょう✨",
-  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "sato#0001" },
+    accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "sato#0001" },
     links: [],
     events: [{ name: "文化祭出展準備", date: "2024-05-01", status: "upcoming" }],
   },
@@ -92,7 +92,7 @@ const mockMembers: Member[] = [
     year: "1年生",
     roles: ["新入生"],
     bio: "新入生です！よろしくお願いします🌟",
-  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "yamaji#0002" },
+    accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "yamaji#0002" },
     links: [],
     events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
   },
@@ -104,7 +104,7 @@ const mockMembers: Member[] = [
     year: "1年生",
     roles: ["新入生"],
     bio: "プログラミング初心者ですが、頑張ります！",
-  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: "https://github.com/suzuki", discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "suzu#0003" },
+    accounts: { lineUrl: "#", discordUrl: "#", githubUrl: "https://github.com/suzuki", discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "suzu#0003" },
     links: [],
     events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
   },
@@ -274,24 +274,24 @@ export default function MemberList() {
                 <div className="space-y-2">
                   <h4 className="font-medium text-gray-800">連携アカウント</h4>
                   <div className="flex gap-3">
-                        {selectedMember.accounts.lineUrl && (
-                          <a href={selectedMember.accounts.lineUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                            <MessageSquare className="w-4 h-4 text-green-600" />
-                            <span className="text-sm">LINE</span>
-                          </a>
-                        )}
-                        {selectedMember.accounts.discordUrl && (
-                          <a href={selectedMember.accounts.discordUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
-                            <MessageSquare className="w-4 h-4 text-indigo-600" />
-                            <span className="text-sm">Discord</span>
-                          </a>
-                        )}
-                        {selectedMember.accounts.githubUrl && (
-                          <a href={selectedMember.accounts.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                            <Github className="w-4 h-4 text-gray-700" />
-                            <span className="text-sm">GitHub</span>
-                          </a>
-                        )}
+                    {selectedMember.accounts.lineUrl && (
+                      <a href={selectedMember.accounts.lineUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <MessageSquare className="w-4 h-4 text-green-600" />
+                        <span className="text-sm">LINE</span>
+                      </a>
+                    )}
+                    {selectedMember.accounts.discordUrl && (
+                      <a href={selectedMember.accounts.discordUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
+                        <MessageSquare className="w-4 h-4 text-indigo-600" />
+                        <span className="text-sm">Discord</span>
+                      </a>
+                    )}
+                    {selectedMember.accounts.githubUrl && (
+                      <a href={selectedMember.accounts.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <Github className="w-4 h-4 text-gray-700" />
+                        <span className="text-sm">GitHub</span>
+                      </a>
+                    )}
                   </div>
                 </div>
 

@@ -52,11 +52,11 @@ export default function ProfileEdit() {
       department: true,
       bio: true,
     },
-      accounts: {
-        line: { connected: true, id: "tanaka_taro" },
-        discord: { connected: true, id: "tanaka#1234" },
-        github: { connected: true, id: "tanaka-dev" },
-      },
+    accounts: {
+      line: { connected: true, id: "tanaka_taro" },
+      discord: { connected: true, id: "tanaka#1234" },
+      github: { connected: true, id: "tanaka-dev" },
+    },
   })
 
 
