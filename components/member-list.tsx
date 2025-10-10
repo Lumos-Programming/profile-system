@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+// Input removed: search removed per request
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Users, Search, MessageSquare, Github, LinkIcon, Calendar } from "lucide-react"
+import { Users, MessageSquare, Github, LinkIcon, Calendar } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
 interface Member {
@@ -19,9 +19,13 @@ interface Member {
   bio: string
   avatar?: string
   accounts: {
-    line: boolean
-    discord: boolean
-    github: boolean
+    // URLs provided by API (if present)
+    lineUrl?: string
+    discordUrl?: string
+    githubUrl?: string
+    // discord avatar and username for display
+    discordAvatarUrl?: string
+    discordUsername?: string
   }
   links: Array<{
     title: string
@@ -52,7 +56,13 @@ const mockMembers: Member[] = [
 - **UI/UXデザイン**
 
 よろしくお願いします！ 🚀`,
-    accounts: { line: true, discord: true, github: true },
+    accounts: {
+      lineUrl: "https://line.me/ti/p/~tanaka",
+      discordUrl: "https://discordapp.com/users/tanaka#1234",
+      githubUrl: "https://github.com/tanaka-dev",
+      discordAvatarUrl: "/placeholder-user.jpg",
+      discordUsername: "tanaka#1234",
+    },
     links: [
       { title: "個人ブログ", url: "https://tanaka-blog.com" },
       { title: "ポートフォリオ", url: "https://tanaka-portfolio.dev" },
@@ -70,7 +80,7 @@ const mockMembers: Member[] = [
     year: "3年生",
     roles: ["イベント班", "代表"],
     bio: "イベント企画が大好きです！みんなで楽しい思い出を作りましょう✨",
-    accounts: { line: true, discord: true, github: false },
+  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "sato#0001" },
     links: [],
     events: [{ name: "文化祭出展準備", date: "2024-05-01", status: "upcoming" }],
   },
@@ -82,7 +92,7 @@ const mockMembers: Member[] = [
     year: "1年生",
     roles: ["新入生"],
     bio: "新入生です！よろしくお願いします🌟",
-    accounts: { line: true, discord: true, github: false },
+  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "yamaji#0002" },
     links: [],
     events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
   },
@@ -94,7 +104,7 @@ const mockMembers: Member[] = [
     year: "1年生",
     roles: ["新入生"],
     bio: "プログラミング初心者ですが、頑張ります！",
-    accounts: { line: true, discord: true, github: true },
+  accounts: { lineUrl: "#", discordUrl: "#", githubUrl: "https://github.com/suzuki", discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "suzu#0003" },
     links: [],
     events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
   },
@@ -106,8 +116,8 @@ const mockMembers: Member[] = [
     year: "2年生",
     roles: ["広報班"],
     bio: "SNS運用とデザインが得意です📱",
-    accounts: { line: true, discord: true, github: false },
-    links: [{ title: "Instagram", url: "https://instagram.com/misaki" }],
+    accounts: { lineUrl: "#", discordUrl: "#", githubUrl: undefined, discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "misaki#0004" },
+    links: [],
     events: [],
   },
   {
@@ -118,27 +128,33 @@ const mockMembers: Member[] = [
     year: "4年生",
     roles: ["4年生", "技術顧問"],
     bio: "卒業研究でAI開発をしています。技術的な質問はお気軽に！",
-    accounts: { line: true, discord: true, github: true },
-    links: [{ title: "研究室ページ", url: "https://lab.example.com" }],
+    accounts: { lineUrl: "#", discordUrl: "#", githubUrl: "https://github.com/kenta", discordAvatarUrl: "/placeholder-user.jpg", discordUsername: "kenta#0005" },
+    links: [],
     events: [],
   },
 ]
 
 export default function MemberList() {
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
+  const [members, setMembers] = useState<Member[]>(mockMembers)
 
-  const filteredMembers = mockMembers.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.roles.some((role) => role.toLowerCase().includes(searchTerm.toLowerCase())),
-  )
+  useEffect(() => {
+    let cancelled = false
+    fetch("/api/members")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data)) setMembers(data)
+      })
+      .catch(() => {
+        // fetch失敗時はmockのまま
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="space-y-6">
-      {/* 検索・フィルター */}
       <Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -147,22 +163,11 @@ export default function MemberList() {
           </CardTitle>
           <CardDescription>サークルメンバーのプロフィールを確認できます</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="名前、ニックネーム、学部、ロールで検索..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 rounded-lg"
-            />
-          </div>
-        </CardContent>
       </Card>
 
       {/* メンバーカード一覧 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {filteredMembers.map((member) => (
+        {members.map((member) => (
           <Card
             key={member.id}
             className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all cursor-pointer hover:scale-105"
@@ -170,12 +175,13 @@ export default function MemberList() {
           >
             <CardContent className="p-4 text-center">
               <Avatar className="w-12 h-12 mx-auto mb-3">
-                <AvatarImage src={member.avatar || "/placeholder.svg"} />
+                {/* メンバーのアイコンはDiscordのアバターを優先 */}
+                <AvatarImage src={member.accounts.discordAvatarUrl || member.avatar || "/placeholder-user.jpg"} />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-400 to-purple-400 text-white">
                   {member.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <h3 className="font-medium text-sm truncate mb-1">{member.name}</h3>
+              <h3 className="font-medium text-sm truncate mb-1">{member.accounts.discordUsername || member.name}</h3>
               <p className="text-xs text-gray-600 mb-2">@{member.nickname}</p>
               <div className="flex flex-wrap gap-1 justify-center">
                 {member.roles.slice(0, 2).map((role) => (
@@ -189,20 +195,27 @@ export default function MemberList() {
                   </Badge>
                 )}
               </div>
+              <div className="flex items-center justify-center gap-3 mt-3">
+                {member.accounts.lineUrl && (
+                  <a href={member.accounts.lineUrl} target="_blank" rel="noopener noreferrer" aria-label="LINE">
+                    <MessageSquare className="w-5 h-5 text-green-600" />
+                  </a>
+                )}
+                {member.accounts.discordUrl && (
+                  <a href={member.accounts.discordUrl} target="_blank" rel="noopener noreferrer" aria-label="Discord">
+                    <MessageSquare className="w-5 h-5 text-indigo-600" />
+                  </a>
+                )}
+                {member.accounts.githubUrl && (
+                  <a href={member.accounts.githubUrl} target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                    <Github className="w-5 h-5 text-gray-700" />
+                  </a>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
-
-      {filteredMembers.length === 0 && (
-        <Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
-          <CardContent className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-600 mb-2">メンバーが見つかりません</h3>
-            <p className="text-gray-500">検索条件を変更してみてください</p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* メンバー詳細ダイアログ */}
       <Dialog open={!!selectedMember} onOpenChange={() => setSelectedMember(null)}>
@@ -261,75 +274,28 @@ export default function MemberList() {
                 <div className="space-y-2">
                   <h4 className="font-medium text-gray-800">連携アカウント</h4>
                   <div className="flex gap-3">
-                    {selectedMember.accounts.line && (
-                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
-                        <MessageSquare className="w-4 h-4 text-green-600" />
-                        <span className="text-sm">LINE</span>
-                      </div>
-                    )}
-                    {selectedMember.accounts.discord && (
-                      <div className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
-                        <MessageSquare className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm">Discord</span>
-                      </div>
-                    )}
-                    {selectedMember.accounts.github && (
-                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                        <Github className="w-4 h-4 text-gray-700" />
-                        <span className="text-sm">GitHub</span>
-                      </div>
-                    )}
+                        {selectedMember.accounts.lineUrl && (
+                          <a href={selectedMember.accounts.lineUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                            <MessageSquare className="w-4 h-4 text-green-600" />
+                            <span className="text-sm">LINE</span>
+                          </a>
+                        )}
+                        {selectedMember.accounts.discordUrl && (
+                          <a href={selectedMember.accounts.discordUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-indigo-50 rounded-lg">
+                            <MessageSquare className="w-4 h-4 text-indigo-600" />
+                            <span className="text-sm">Discord</span>
+                          </a>
+                        )}
+                        {selectedMember.accounts.githubUrl && (
+                          <a href={selectedMember.accounts.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                            <Github className="w-4 h-4 text-gray-700" />
+                            <span className="text-sm">GitHub</span>
+                          </a>
+                        )}
                   </div>
                 </div>
 
-                {/* リンク */}
-                {selectedMember.links.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-800">お気に入りリンク</h4>
-                    <div className="space-y-2">
-                      {selectedMember.links.map((link, index) => (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <LinkIcon className="w-4 h-4 text-gray-600" />
-                          <span className="text-sm font-medium">{link.title}</span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 参加イベント */}
-                {selectedMember.events.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-gray-800">参加イベント</h4>
-                    <div className="space-y-2">
-                      {selectedMember.events.map((event, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-600" />
-                            <div>
-                              <p className="text-sm font-medium">{event.name}</p>
-                              <p className="text-xs text-gray-600">{event.date}</p>
-                            </div>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className={
-                              event.status === "upcoming" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-                            }
-                          >
-                            {event.status === "upcoming" ? "参加予定" : "参加済み"}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* リンクと参加イベントは非表示（設定ページと合わせました） */}
               </div>
             </>
           )}
