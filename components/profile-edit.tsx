@@ -11,22 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  User,
-  MessageSquare,
-  LinkIcon,
-  Github,
-  Instagram,
-  Twitter,
-  Eye,
-  EyeOff,
-  Save,
-  Plus,
-  X,
-  Edit3,
-  Monitor,
-} from "lucide-react"
+import { User, MessageSquare, Github, Eye, EyeOff, Save, Edit3, Monitor } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import rehypeRaw from "rehype-raw"
+import rehypeHighlight from "rehype-highlight"
 
 interface LinkItem {
   id: string
@@ -67,29 +56,9 @@ export default function ProfileEdit() {
       line: { connected: true, id: "tanaka_taro" },
       discord: { connected: true, id: "tanaka#1234" },
       github: { connected: true, id: "tanaka-dev" },
-      instagram: { connected: false, id: "" },
-      twitter: { connected: false, id: "" },
     },
   })
 
-  const [links, setLinks] = useState<LinkItem[]>([
-    { id: "1", title: "個人ブログ", url: "https://tanaka-blog.com" },
-    { id: "2", title: "ポートフォリオ", url: "https://tanaka-portfolio.dev" },
-  ])
-
-  const addLink = () => {
-    if (links.length < 3) {
-      setLinks([...links, { id: Date.now().toString(), title: "", url: "" }])
-    }
-  }
-
-  const removeLink = (id: string) => {
-    setLinks(links.filter((link) => link.id !== id))
-  }
-
-  const updateLink = (id: string, field: "title" | "url", value: string) => {
-    setLinks(links.map((link) => (link.id === id ? { ...link, [field]: value } : link)))
-  }
 
   const togglePrivacy = (field: keyof typeof profile.privacy) => {
     setProfile((prev) => ({
@@ -342,81 +311,11 @@ export default function ProfileEdit() {
                   </Badge>
                 </div>
 
-                {/* Instagram（任意） */}
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <Instagram className="w-8 h-8 text-pink-600" />
-                    <div>
-                      <div className="font-medium">Instagram</div>
-                      <div className="text-sm text-gray-600">未連携</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">未連携</Badge>
-                </div>
-
-                {/* X（任意） */}
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <Twitter className="w-8 h-8 text-blue-500" />
-                    <div>
-                      <div className="font-medium">X (旧Twitter)</div>
-                      <div className="text-sm text-gray-600">未連携</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary">未連携</Badge>
-                </div>
+                {/* Instagram と X を削除しました。LINE / Discord / GitHub のみ表示 */}
               </div>
             </CardContent>
           </Card>
 
-          {/* リンク - 編集モード */}
-          <Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <LinkIcon className="w-5 h-5 text-indigo-600" />
-                お気に入りリンク
-              </CardTitle>
-              <CardDescription>最大3件まで、あなたのお気に入りのリンクを追加できます</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {links.map((link, index) => (
-                <div key={link.id} className="space-y-2 p-3 rounded-lg border bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-sm font-medium">リンク {index + 1}</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeLink(link.id)}
-                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="タイトル"
-                      value={link.title}
-                      onChange={(e) => updateLink(link.id, "title", e.target.value)}
-                      className="rounded-lg"
-                    />
-                    <Input
-                      placeholder="URL"
-                      value={link.url}
-                      onChange={(e) => updateLink(link.id, "url", e.target.value)}
-                      className="rounded-lg"
-                    />
-                  </div>
-                </div>
-              ))}
-
-              {links.length < 3 && (
-                <Button variant="outline" onClick={addLink} className="w-full rounded-lg border-dashed">
-                  <Plus className="w-4 h-4 mr-2" />
-                  リンクを追加
-                </Button>
-              )}
-            </CardContent>
-          </Card>
 
           {/* 保存ボタン */}
           <div className="flex justify-center">
@@ -467,7 +366,9 @@ export default function ProfileEdit() {
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-600">自己紹介</Label>
                     <div className="prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg">
-                      <ReactMarkdown>{profile.bio}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeHighlight]}>
+                        {profile.bio}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -498,55 +399,9 @@ export default function ProfileEdit() {
                 </div>
               </div>
 
-              {/* リンクプレビュー */}
-              {links.length > 0 && (
-                <div className="space-y-4">
-                  <h3 className="font-medium text-gray-800">お気に入りリンク</h3>
-                  <div className="space-y-2">
-                    {links.map((link) => (
-                      <a
-                        key={link.id}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <LinkIcon className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm font-medium">{link.title}</span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* お気に入りリンクのプレビューは削除されました */}
 
-              {/* 参加イベント履歴プレビュー */}
-              <div className="space-y-4">
-                <h3 className="font-medium text-gray-800">参加イベント履歴</h3>
-                <div className="space-y-2">
-                  <div className="p-3 border rounded-lg bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm">新歓BBQ大会</h4>
-                        <p className="text-xs text-gray-600">2024年4月15日</p>
-                      </div>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                        参加予定
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="p-3 border rounded-lg bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium text-sm">冬合宿</h4>
-                        <p className="text-xs text-gray-600">2024年2月10日-12日</p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        参加済み
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {/* 参加イベント履歴は削除されました */}
             </CardContent>
           </Card>
 
