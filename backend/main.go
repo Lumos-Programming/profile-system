@@ -154,6 +154,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// authHandler はJWTトークンを検証し、ユーザーIDをコンテキストにセットします。
 func authHandler(c *gin.Context) {
 	tokenString, err := c.Cookie(authCookieName)
 	if err != nil || tokenString == "" {
