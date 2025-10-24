@@ -16,7 +16,12 @@ type Firestore struct {
 	Credentials string `yaml:"credentials"`
 }
 
-const configPath = "../secrets/config.yaml"
+// type authを作成し、secretフィールドを追加
+type Auth struct {
+	JWTSecret string `yaml:"jwt_secret"`
+}
+
+const configPath = "../secrets/config.sample.yaml"
 
 func Load() (*Config, error) {
 	file, err := os.Open(configPath)
