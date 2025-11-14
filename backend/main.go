@@ -69,7 +69,7 @@ func setupAPIServer(client *firestore.Client) *gin.Engine {
 	router := gin.Default()
 	api.RegisterHandlers(router, h)
 	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
 	})
@@ -81,7 +81,7 @@ func setupAPIServer(client *firestore.Client) *gin.Engine {
 
 	api := router.Group("/api") // 以下のapiグループをまとめる
 
-	api.Use(authHandler)
+	//api.Use(authHandler)
 
 	// "/api/dummy/auth" エンドポイントを追加
 	api.POST("/dummy/auth", func(c *gin.Context) {
