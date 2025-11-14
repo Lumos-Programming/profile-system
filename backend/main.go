@@ -67,12 +67,12 @@ func main() {
 func setupAPIServer(client *firestore.Client) *gin.Engine {
 	h := handler.NewHandler(client)
 	router := gin.Default()
-	api.RegisterHandlers(router, h)
 	router.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
 	})
+	api.RegisterHandlers(router, h)
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "ok",
