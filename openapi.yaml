@@ -41,6 +41,45 @@ paths:
         '500':
           description: サーバーエラー
 
+  /api/members:
+    get:
+      summary: メンバー一覧を取得する
+      description: サークルメンバーのサマリ情報一覧を返します。
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MemberSummary'
+        '500':
+          description: サーバーエラー
+
+  /api/members/{id}:
+    get:
+      summary: メンバー詳細を取得する
+      description: 指定したメンバーの詳細情報を返します。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberDetail'
+        '404':
+          description: メンバーが見つかりません
+        '500':
+          description: サーバーエラー
+  
+
 components:
   schemas:
     BasicInfo:
@@ -111,3 +150,102 @@ components:
         message:
           type: string
           example: 基本情報を更新しました。
+    MemberSummary:
+      type: object
+      required:
+        - id
+        - name
+        - nickname
+        - roles
+      properties:
+        id:
+          type: string
+          example: "1"
+        name:
+          type: string
+          example: "田中 太郎"
+        nickname:
+          type: string
+          example: "たなたろ"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["Web班", "副代表"]
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+    MemberDetail:
+      allOf:
+        - $ref: '#/components/schemas/MemberSummary'
+        - type: object
+          required:
+            - department
+            - year
+            - bio
+            - accounts
+            - links
+            - events
+          properties:
+            department:
+              type: string
+              example: "情報工学部"
+            year:
+              type: string
+              example: "2年生"
+            bio:
+              type: string
+              description: Markdown形式の自己紹介
+              example: |
+                # 自己紹介
+                プログラミングが好きな2年生です！
+            accounts:
+              type: object
+              required:
+                - line
+                - discord
+                - github
+              properties:
+                line:
+                  type: boolean
+                  example: true
+                discord:
+                  type: boolean
+                  example: true
+                github:
+                  type: boolean
+                  example: true
+            links:
+              type: array
+              items:
+                type: object
+                required:
+                  - title
+                  - url
+                properties:
+                  title:
+                    type: string
+                    example: "個人ブログ"
+                  url:
+                    type: string
+                    example: "https://tanaka-blog.com"
+            events:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - date
+                  - status
+                properties:
+                  name:
+                    type: string
+                    example: "新歓BBQ大会"
+                  date:
+                    type: string
+                    format: date
+                    example: "2024-04-15"
+                  status:
+                    type: string
+                    enum: [upcoming, completed]
+                    example: "upcoming"
