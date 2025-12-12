@@ -228,7 +228,7 @@ components:
                     example: "個人ブログ"
                   url:
                     type: string
-                    example: "https://tanaka-blog.com"
+                    example: "https://example.com"
             events:
               type: array
               items:
