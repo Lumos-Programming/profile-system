@@ -24,6 +24,10 @@ import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError
 // @ts-ignore
 import type { BasicInfo } from '../models';
 // @ts-ignore
+import type { MemberDetail } from '../models';
+// @ts-ignore
+import type { MemberSummary } from '../models';
+// @ts-ignore
 import type { UpdateResponse } from '../models';
 /**
  * DefaultApi - axios parameter creator
@@ -31,6 +35,70 @@ import type { UpdateResponse } from '../models';
  */
 export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * サークルメンバーのサマリ情報一覧を返します。
+         * @summary メンバー一覧を取得する
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersGet: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/members`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 指定したメンバーの詳細情報を返します。
+         * @summary メンバー詳細を取得する
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersIdGet: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('apiMembersIdGet', 'id', id)
+            const localVarPath = `/api/members/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * 現在登録されているユーザーの基本情報を返します。
          * @summary 基本情報を取得する
@@ -108,6 +176,31 @@ export const DefaultApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
     return {
         /**
+         * サークルメンバーのサマリ情報一覧を返します。
+         * @summary メンバー一覧を取得する
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiMembersGet(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<Array<MemberSummary>>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMembersGet(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.apiMembersGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 指定したメンバーの詳細情報を返します。
+         * @summary メンバー詳細を取得する
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiMembersIdGet(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MemberDetail>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMembersIdGet(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.apiMembersIdGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 現在登録されているユーザーの基本情報を返します。
          * @summary 基本情報を取得する
          * @param {*} [options] Override http request option.
@@ -143,6 +236,25 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = DefaultApiFp(configuration)
     return {
         /**
+         * サークルメンバーのサマリ情報一覧を返します。
+         * @summary メンバー一覧を取得する
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersGet(options?: RawAxiosRequestConfig): AxiosPromise<Array<MemberSummary>> {
+            return localVarFp.apiMembersGet(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 指定したメンバーの詳細情報を返します。
+         * @summary メンバー詳細を取得する
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersIdGet(id: string, options?: RawAxiosRequestConfig): AxiosPromise<MemberDetail> {
+            return localVarFp.apiMembersIdGet(id, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 現在登録されているユーザーの基本情報を返します。
          * @summary 基本情報を取得する
          * @param {*} [options] Override http request option.
@@ -171,6 +283,29 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
  * @extends {BaseAPI}
  */
 export class DefaultApi extends BaseAPI {
+    /**
+     * サークルメンバーのサマリ情報一覧を返します。
+     * @summary メンバー一覧を取得する
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public apiMembersGet(options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).apiMembersGet(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 指定したメンバーの詳細情報を返します。
+     * @summary メンバー詳細を取得する
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public apiMembersIdGet(id: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).apiMembersIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * 現在登録されているユーザーの基本情報を返します。
      * @summary 基本情報を取得する
