@@ -19,8 +19,12 @@ jobs:
           node-version: '24'
       - name: Run Generation
         working-directory: ./backend
-        run: make gen
+        run: |
+          make gen
+          git diff --exit-code
       - name: Run Frontend Generation
         working-directory: ./frontend
-        run: make all
-      
+        run: |
+          make all
+          git diff --exit-code
+    
