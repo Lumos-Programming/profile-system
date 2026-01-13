@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 
@@ -15,7 +14,7 @@ import (
 // 機能：Firestore の "members" コレクションから全ドキュメントを読み込み、api.MemberSummary の配列として返す。
 func (h *Handler) GetApiMembers(c *gin.Context) {
 	// --- ① Firestore へ問い合わせるための Context と iterator を用意 ---
-	ctx := context.Background()
+	ctx := c.Request.Context()
 	iter := h.fs.Collection("members").Documents(ctx)
 	defer iter.Stop()
 
@@ -97,26 +96,47 @@ func (h *Handler) GetApiMembers(c *gin.Context) {
 
 // 機能：Firestore の "members" コレクションから指定IDのドキュメントを読み込み、api.MemberDetail として返す。
 func (h *Handler) GetApiMembersId(c *gin.Context, id string) {
-	ctx := context.Background()
+	// --- ① Firestore へ問い合わせるための Context を用意 ---
+	ctx := c.Request.Context()
+
+	// --- ② 指定IDのドキュメントを1件取得 ---
+	// members/{id} を取得する（存在しない/権限がない/通信エラーなどがありうる）
 	docSnap, err := h.fs.Collection("members").Doc(id).Get(ctx)
 	if err != nil {
+		// --- ②-1 そのIDのドキュメントが存在しない場合 ---
+		// 「サーバの故障」ではなく「指定されたリソースがない」ので 404 を返す
 		if status.Code(err) == codes.NotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "member not found"})
 			return
 		}
+
+		// --- ②-2 それ以外の取得エラー ---
+		// 例：Firestoreへの通信失敗、権限不足、一時障害など
+		// この場合は APIとして処理を完了できないので 500 を返す
+		// （本番運用では err.Error() を返さず、ログに詳細を出す形にすることが多い）
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// --- ③ 取得したドキュメントを struct(api.MemberDetail) にデコード（型変換） ---
+	// Firestore上のデータ型が struct と一致しないと失敗する
+	// 例：roles が []string ではなく string だった、name が number だった、など
 	var d api.MemberDetail
 	if err := docSnap.DataTo(&d); err != nil {
+		// --- ③-1 デコード失敗 ---
+		// 詳細取得APIは「その1件が返せない」= API失敗なので、ログをErrorで残して500
 		slog.Error("failed to parse member document", "doc", docSnap.Ref.ID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	// --- ④ レスポンスに必要な補完（IDが空ならdocIDを入れる） ---
+	// Firestoreのフィールドに id が入っていない/空でも、docのIDを返すようにする
 	if d.Id == "" {
 		d.Id = docSnap.Ref.ID
 	}
+
+	// --- ⑤ 正常終了：MemberDetail を返す（200） ---
 	c.JSON(http.StatusOK, d)
 }
 
