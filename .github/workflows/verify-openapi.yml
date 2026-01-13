@@ -1,0 +1,26 @@
+name: Verify OpenAPI
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aquaproj/aqua-installer@11dd79b4e498d471a9385aa9fb7f62bb5f52a73c # v4.0.4
+        with:
+          aqua_version: v2.56.2
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run Generation
+        working-directory: ./backend
+        run: make gen
+      - name: Run Frontend Generation
+        working-directory: ./frontend
+        run: make all
+      
