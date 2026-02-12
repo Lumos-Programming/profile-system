@@ -78,6 +78,35 @@ paths:
           description: メンバーが見つかりません
         '500':
           description: サーバーエラー
+
+  /api/line-oauth:
+    get:
+      summary: LINE OAuthコールバック
+      description: LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: LINE OAuth認可コード
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+          description: CSRF対策のstate値
+      responses:
+        '200':
+          description: アクセストークンとユーザー情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LineOAuthResponse'
+        '400':
+          description: 無効なcodeまたはstate
+        '500':
+          description: サーバーエラー
   
 
 components:
@@ -249,3 +278,47 @@ components:
                     type: string
                     enum: [upcoming, completed]
                     example: "upcoming"
+    LineOAuthResponse:
+      type: object
+      required:
+        - access_token
+        - expires_in
+        - user
+      properties:
+        access_token:
+          type: string
+          description: LINEから発行されたアクセストークン
+          example: 5C2Yx...d9q
+        refresh_token:
+          type: string
+          description: 必要に応じて返されるリフレッシュトークン
+          example: 8Pd1...0Lm
+        expires_in:
+          type: integer
+          description: アクセストークンの有効期限(秒)
+          example: 2592000
+        user:
+          $ref: '#/components/schemas/LineUser'
+    LineUser:
+      type: object
+      required:
+        - user_id
+        - display_name
+      properties:
+        user_id:
+          type: string
+          description: LINEユーザーID
+          example: U123456789abcdef
+        display_name:
+          type: string
+          description: 表示名
+          example: 田中太郎
+        picture_url:
+          type: string
+          format: uri
+          description: プロフィール画像URL
+          example: https://profile.line-scdn.net/abc123
+        status_message:
+          type: string
+          description: ステータスメッセージ
+          example: いつでも連絡ください
