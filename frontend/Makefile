@@ -7,7 +7,7 @@ OPENAPI_SPEC := ../openapi.yaml
 OUTPUT_DIR := src/lib/api
 
 # OpenAPI Generator CLI command
-GENERATOR := pnpx @openapitools/openapi-generator-cli
+GENERATOR := pnpm dlx @openapitools/openapi-generator-cli
 
 # Output subdirectories for APIs and models
 API_PACKAGE := apis
