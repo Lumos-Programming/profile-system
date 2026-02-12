@@ -31,6 +31,34 @@ type BasicInfo struct {
 	Visibility       Visibility `json:"visibility"`
 }
 
+// LineOAuthResponse defines model for LineOAuthResponse.
+type LineOAuthResponse struct {
+	// AccessToken LINEから発行されたアクセストークン
+	AccessToken string `json:"access_token"`
+
+	// ExpiresIn アクセストークンの有効期限(秒)
+	ExpiresIn int `json:"expires_in"`
+
+	// RefreshToken 必要に応じて返されるリフレッシュトークン
+	RefreshToken *string  `json:"refresh_token,omitempty"`
+	User         LineUser `json:"user"`
+}
+
+// LineUser defines model for LineUser.
+type LineUser struct {
+	// DisplayName 表示名
+	DisplayName string `json:"display_name"`
+
+	// PictureUrl プロフィール画像URL
+	PictureUrl *string `json:"picture_url,omitempty"`
+
+	// StatusMessage ステータスメッセージ
+	StatusMessage *string `json:"status_message,omitempty"`
+
+	// UserId LINEユーザーID
+	UserId string `json:"user_id"`
+}
+
 // MemberDetail defines model for MemberDetail.
 type MemberDetail struct {
 	Accounts struct {
@@ -85,11 +113,23 @@ type Visibility struct {
 	X                bool `json:"x"`
 }
 
+// GetApiLineOauthParams defines parameters for GetApiLineOauth.
+type GetApiLineOauthParams struct {
+	// Code LINE OAuth認可コード
+	Code string `form:"code" json:"code"`
+
+	// State CSRF対策のstate値
+	State *string `form:"state,omitempty" json:"state,omitempty"`
+}
+
 // PutApiProfileBasicInfoJSONRequestBody defines body for PutApiProfileBasicInfo for application/json ContentType.
 type PutApiProfileBasicInfoJSONRequestBody = BasicInfo
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// LINE OAuthコールバック
+	// (GET /api/line-oauth)
+	GetApiLineOauth(c *gin.Context, params GetApiLineOauthParams)
 	// メンバー一覧を取得する
 	// (GET /api/members)
 	GetApiMembers(c *gin.Context)
@@ -112,6 +152,47 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetApiLineOauth operation middleware
+func (siw *ServerInterfaceWrapper) GetApiLineOauth(c *gin.Context) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetApiLineOauthParams
+
+	// ------------- Required query parameter "code" -------------
+
+	if paramValue := c.Query("code"); paramValue != "" {
+
+	} else {
+		siw.ErrorHandler(c, fmt.Errorf("Query argument code is required, but not found"), http.StatusBadRequest)
+		return
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "code", c.Request.URL.Query(), &params.Code)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter code: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "state", c.Request.URL.Query(), &params.State)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter state: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetApiLineOauth(c, params)
+}
 
 // GetApiMembers operation middleware
 func (siw *ServerInterfaceWrapper) GetApiMembers(c *gin.Context) {
@@ -203,6 +284,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.GET(options.BaseURL+"/api/line-oauth", wrapper.GetApiLineOauth)
 	router.GET(options.BaseURL+"/api/members", wrapper.GetApiMembers)
 	router.GET(options.BaseURL+"/api/members/:id", wrapper.GetApiMembersId)
 	router.GET(options.BaseURL+"/api/profile/basic-info", wrapper.GetApiProfileBasicInfo)
