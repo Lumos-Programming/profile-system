@@ -42,7 +42,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := setupAPIServer(client)
+	router := setupAPIServer(client, cfg)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", cfg.Port),
@@ -64,8 +64,8 @@ func main() {
 	client.Close()
 }
 
-func setupAPIServer(client *firestore.Client) *gin.Engine {
-	h := handler.NewHandler(client)
+func setupAPIServer(client *firestore.Client, cfg *config.Config) *gin.Engine {
+	h := handler.NewHandler(client, cfg.LINE)
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")

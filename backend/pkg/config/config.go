@@ -10,12 +10,22 @@ import (
 type Config struct {
 	Port      int       `yaml:"port"`
 	Firestore Firestore `yaml:"firestore"`
+	LINE      LINE      `yaml:"line"`
 }
 
 type Firestore struct {
 	ProjectID   string `yaml:"project_id"`
 	Credentials string `yaml:"credentials"`
 }
+
+type LINE struct {
+	ChannelID     string `yaml:"channel_id"`
+	ChannelSecret string `yaml:"channel_secret"`
+	RedirectURI   string `yaml:"redirect_uri"`
+	State         string `yaml:"state"`
+}
+
+
 
 // type authを作成し、secretフィールドを追加
 type Auth struct {
