@@ -1,12 +1,10 @@
 name: Go Format
-
 on:
-  push:
+  pull_request:
+    branches:
+      - main
     paths:
       - "backend/**/*.go"
-
-permissions:
-  contents: write
 
 jobs:
   go-fmt:
@@ -20,16 +18,6 @@ jobs:
 
       - name: Run go fmt
         working-directory: ./backend
-        run: go fmt ./...
-
-      - name: Commit and push if changed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No formatting changes needed."
-          else
-            git commit -m "style: apply go fmt"
-            git push
-          fi
+          go fmt ./...
+          git diff --exit-code
