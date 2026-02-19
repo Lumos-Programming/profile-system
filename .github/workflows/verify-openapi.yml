@@ -3,9 +3,6 @@ on:
   pull_request:
     branches:
       - main
-  push:  # テスト用（確認後削除）
-    branches:
-      - test/ci
 jobs:
   generate:
     runs-on: ubuntu-latest

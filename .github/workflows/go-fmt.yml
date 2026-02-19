@@ -2,12 +2,8 @@ name: Go Format
 
 on:
   push:
-    branches:
-      - main
-      - test/ci  # テスト用（確認後削除）
     paths:
       - "backend/**/*.go"
-      - ".github/workflows/go-fmt.yml"  # テスト用（確認後削除）
 
 permissions:
   contents: write
