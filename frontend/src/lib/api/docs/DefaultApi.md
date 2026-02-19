@@ -4,10 +4,67 @@ All URIs are relative to *http://localhost:8080*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
+|[**apiLineOauthGet**](#apilineoauthget) | **GET** /api/line-oauth | LINE OAuthコールバック|
 |[**apiMembersGet**](#apimembersget) | **GET** /api/members | メンバー一覧を取得する|
 |[**apiMembersIdGet**](#apimembersidget) | **GET** /api/members/{id} | メンバー詳細を取得する|
 |[**apiProfileBasicInfoGet**](#apiprofilebasicinfoget) | **GET** /api/profile/basic-info | 基本情報を取得する|
 |[**apiProfileBasicInfoPut**](#apiprofilebasicinfoput) | **PUT** /api/profile/basic-info | 基本情報を更新する|
+
+# **apiLineOauthGet**
+> LineOAuthResponse apiLineOauthGet()
+
+LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let code: string; //LINE OAuth認可コード (default to undefined)
+let state: string; //CSRF対策のstate値 (optional) (default to undefined)
+
+const { status, data } = await apiInstance.apiLineOauthGet(
+    code,
+    state
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **code** | [**string**] | LINE OAuth認可コード | defaults to undefined|
+| **state** | [**string**] | CSRF対策のstate値 | (optional) defaults to undefined|
+
+
+### Return type
+
+**LineOAuthResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | アクセストークンとユーザー情報の取得に成功 |  -  |
+|**400** | 無効なcodeまたはstate |  -  |
+|**500** | サーバーエラー |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **apiMembersGet**
 > Array<MemberSummary> apiMembersGet()

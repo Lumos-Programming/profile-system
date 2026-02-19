@@ -1,4 +1,6 @@
 export * from './basic-info';
+export * from './line-oauth-response';
+export * from './line-user';
 export * from './member-detail';
 export * from './member-detail-all-of-accounts';
 export * from './member-detail-all-of-events';
