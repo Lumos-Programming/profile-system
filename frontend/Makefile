@@ -24,6 +24,7 @@ GENERATOR_OPTS := \
 
 all: generate-client
 
+# openapi.yamlから生成されたソースコードが格納される場所
 generate-client:
 	$(GENERATOR) generate $(GENERATOR_OPTS)
 
