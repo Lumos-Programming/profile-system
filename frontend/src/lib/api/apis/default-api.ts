@@ -24,6 +24,8 @@ import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError
 // @ts-ignore
 import type { BasicInfo } from '../models';
 // @ts-ignore
+import type { LineOAuthResponse } from '../models';
+// @ts-ignore
 import type { MemberDetail } from '../models';
 // @ts-ignore
 import type { MemberSummary } from '../models';
@@ -35,6 +37,48 @@ import type { UpdateResponse } from '../models';
  */
 export const DefaultApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+         * @summary LINE OAuthコールバック
+         * @param {string} code LINE OAuth認可コード
+         * @param {string} [state] CSRF対策のstate値
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiLineOauthGet: async (code: string, state?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'code' is not null or undefined
+            assertParamExists('apiLineOauthGet', 'code', code)
+            const localVarPath = `/api/line-oauth`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            if (code !== undefined) {
+                localVarQueryParameter['code'] = code;
+            }
+
+            if (state !== undefined) {
+                localVarQueryParameter['state'] = state;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * サークルメンバーのサマリ情報一覧を返します。
          * @summary メンバー一覧を取得する
@@ -176,6 +220,20 @@ export const DefaultApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DefaultApiAxiosParamCreator(configuration)
     return {
         /**
+         * LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+         * @summary LINE OAuthコールバック
+         * @param {string} code LINE OAuth認可コード
+         * @param {string} [state] CSRF対策のstate値
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiLineOauthGet(code: string, state?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<LineOAuthResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiLineOauthGet(code, state, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.apiLineOauthGet']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * サークルメンバーのサマリ情報一覧を返します。
          * @summary メンバー一覧を取得する
          * @param {*} [options] Override http request option.
@@ -236,6 +294,17 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = DefaultApiFp(configuration)
     return {
         /**
+         * LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+         * @summary LINE OAuthコールバック
+         * @param {string} code LINE OAuth認可コード
+         * @param {string} [state] CSRF対策のstate値
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiLineOauthGet(code: string, state?: string, options?: RawAxiosRequestConfig): AxiosPromise<LineOAuthResponse> {
+            return localVarFp.apiLineOauthGet(code, state, options).then((request) => request(axios, basePath));
+        },
+        /**
          * サークルメンバーのサマリ情報一覧を返します。
          * @summary メンバー一覧を取得する
          * @param {*} [options] Override http request option.
@@ -283,6 +352,19 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
  * @extends {BaseAPI}
  */
 export class DefaultApi extends BaseAPI {
+    /**
+     * LINEのOAuthコールバックURLとして、付与されたcodeをアクセストークンに交換し、認証済みユーザー情報を返します。
+     * @summary LINE OAuthコールバック
+     * @param {string} code LINE OAuth認可コード
+     * @param {string} [state] CSRF対策のstate値
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public apiLineOauthGet(code: string, state?: string, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).apiLineOauthGet(code, state, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * サークルメンバーのサマリ情報一覧を返します。
      * @summary メンバー一覧を取得する

@@ -7,6 +7,8 @@ common.ts
 configuration.ts
 docs/BasicInfo.md
 docs/DefaultApi.md
+docs/LineOAuthResponse.md
+docs/LineUser.md
 docs/MemberDetail.md
 docs/MemberDetailAllOfAccounts.md
 docs/MemberDetailAllOfEvents.md
@@ -18,6 +20,8 @@ git_push.sh
 index.ts
 models/basic-info.ts
 models/index.ts
+models/line-oauth-response.ts
+models/line-user.ts
 models/member-detail-all-of-accounts.ts
 models/member-detail-all-of-events.ts
 models/member-detail-all-of-links.ts
