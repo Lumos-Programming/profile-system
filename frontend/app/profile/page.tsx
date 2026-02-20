@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,107 +8,146 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import ReactMarkdown from "react-markdown"
+import { DefaultApi, Configuration } from "@/src/lib/api"
 
-// プロファイルの型定義
+const apiClient = new DefaultApi(new Configuration({ basePath: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080" }))
+
 interface Profile {
-    学籍番号: string
-    ニックネーム: string
-    姓: string
-    名: string
-    学部: string
-    自己紹介: string
-    LINE: string
-    Discord: string
-    GitHub: string
-    公開設定: {
-        学籍番号: boolean
-        ニックネーム: boolean
-        姓: boolean
-        名: boolean
-        学部: boolean
-        自己紹介: boolean
-        LINE: boolean
-        Discord: boolean
-        GitHub: boolean
+    studentId: string
+    nickname: string
+    lastName: string
+    firstName: string
+    faculty: string
+    selfIntroduction: string
+    visibility: {
+        name: boolean
+        selfIntroduction: boolean
+        x: boolean
+        instagram: boolean
     }
 }
 
+const defaultProfile: Profile = {
+    studentId: "",
+    nickname: "",
+    lastName: "",
+    firstName: "",
+    faculty: "",
+    selfIntroduction: "",
+    visibility: {
+        name: false,
+        selfIntroduction: false,
+        x: false,
+        instagram: false,
+    },
+}
+
+// 表示ラベルのマップ
+const fieldLabels: Record<keyof Omit<Profile, "visibility">, string> = {
+    studentId: "学籍番号",
+    nickname: "ニックネーム",
+    lastName: "姓",
+    firstName: "名",
+    faculty: "学部",
+    selfIntroduction: "自己紹介",
+}
+
+const faculties = ["理工学部", "都市科学部", "経済学部", "経営学部", "教育学部"]
+
 export default function ProfilePage() {
     const [isEditing, setIsEditing] = useState(true)
-    const [profile, setProfile] = useState<Profile>({
-        学籍番号: "2024001",
-        ニックネーム: "たろう",
-        姓: "山田",
-        名: "太郎",
-        学部: "理工学部",
-        自己紹介: "**プログラミング**が好きです。特にWeb開発に興味があります。",
-        LINE: "@yamada_line",
-        Discord: "yamada#1234",
-        GitHub: "github.com/yamada",
-        公開設定: {
-            学籍番号: true,
-            ニックネーム: true,
-            姓: true,
-            名: true,
-            学部: true,
-            自己紹介: true,
-            LINE: false,
-            Discord: false,
-            GitHub: true,
-        },
-    })
+    const [profile, setProfile] = useState<Profile>(defaultProfile)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
-    const faculties = ["理工学部", "都市科学部", "経済学部", "経営学部", "教育学部"]
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+                const response = await apiClient.apiProfileBasicInfoGet()
+                const data = response.data
+                setProfile({
+                    studentId: data.student_id,
+                    nickname: data.nickname,
+                    lastName: data.last_name,
+                    firstName: data.first_name,
+                    faculty: data.faculty,
+                    selfIntroduction: data.self_introduction,
+                    visibility: {
+                        name: data.visibility.name,
+                        selfIntroduction: data.visibility.self_introduction,
+                        x: data.visibility.x,
+                        instagram: data.visibility.instagram,
+                    },
+                })
+            } catch (err) {
+                console.error("プロフィールの取得に失敗しました: ", err)
+                setError("プロフィールの取得に失敗しました。バックエンドが起動しているか確認してください。")
+            } finally {
+                setIsLoading(false)
+            }
+        }
 
-    const handleSave = () => {
-        // TODO: APIを呼び出してプロフィールを保存
-        setIsEditing(false)
-    }
+        fetchProfile()
+    }, [])
 
     const handlePublish = async () => {
         const payload = {
-            student_id: profile.学籍番号,
-            faculty: profile.学部,
-            last_name: profile.姓,
-            first_name: profile.名,
-            nickname: profile.ニックネーム,
-            self_introduction: profile.自己紹介,
+            student_id: profile.studentId,
+            faculty: profile.faculty,
+            last_name: profile.lastName,
+            first_name: profile.firstName,
+            nickname: profile.nickname,
+            self_introduction: profile.selfIntroduction,
             visibility: {
-                name: profile.公開設定.姓 && profile.公開設定.名,
-                self_introduction: profile.公開設定.自己紹介,
-                x: profile.公開設定.LINE,
-                instagram: profile.公開設定.Discord,
+                name: profile.visibility.name,
+                self_introduction: profile.visibility.selfIntroduction,
+                x: profile.visibility.x,
+                instagram: profile.visibility.instagram,
             },
         }
 
         try {
-            const response = await fetch("http://localhost:8080/api/profile/basic-info", {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-            })
-
-            if (response.ok) {
+            const response = await apiClient.apiProfileBasicInfoPut(payload)
+            if (response.status === 200) {
                 alert("プロフィールが公開されました！")
             } else {
                 alert("公開に失敗しました。もう一度お試しください。")
             }
-        } catch (error) {
-            console.error("エラーが発生しました: ", error)
+        } catch (err) {
+            console.error("エラーが発生しました: ", err)
             alert("エラーが発生しました。もう一度お試しください。")
         }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-purple-50 dark:bg-gradient-to-br dark:from-black dark:to-purple-900 flex items-center justify-center">
+                <p className="text-gray-600 dark:text-gray-300">読み込み中...</p>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen bg-purple-50 dark:bg-gradient-to-br dark:from-black dark:to-purple-900 flex items-center justify-center">
+                <p className="text-red-500">{error}</p>
+            </div>
+        )
+    }
+
+    const editFields = Object.keys(fieldLabels) as (keyof Omit<Profile, "visibility">)[]
+
+    // フィールドに紐づく visibility キー（存在する項目のみ）
+    const visibilityKeyMap: Partial<Record<keyof Omit<Profile, "visibility">, keyof Profile["visibility"]>> = {
+        lastName: "name",
+        selfIntroduction: "selfIntroduction",
     }
 
     return (
         <div className="min-h-screen bg-purple-50 dark:bg-gradient-to-br dark:from-black dark:to-purple-900">
             <div className="container mx-auto px-4 py-6 max-w-4xl">
-                {/* <header>
-                    <h1 className="text-2xl font-bold">Lumos Profile System</h1>
-                </header>
-                <h1 className="text-4xl font-bold mb-6 text-center">Lumos Profile System</h1> */}
-
                 {/* スライドトグル */}
                 <div className="flex justify-center mb-6">
                     <div className="flex bg-gray-200 rounded-full p-1">
@@ -143,137 +182,156 @@ export default function ProfilePage() {
                     <CardContent className="space-y-6">
                         {isEditing ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {Object.keys(profile)
-                                    .filter((key) => key !== "公開設定")
-                                    .map((key) => (
-                                        <div
-                                            key={key}
-                                            className={key === "自己紹介" ? "md:col-span-2 space-y-2" : "space-y-2"}
-                                        >
-                                            <div className="flex items-center justify-between">
-                                                <Label>{key}</Label>
-                                                {key === "自己紹介" && isEditing && (
-                                                    <div className="flex items-center space-x-2">
-                                                        <button
-                                                            type="button"
-                                                            title="太字を挿入"
-                                                            className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
-                                                            onClick={() => setProfile({ ...profile, 自己紹介: profile.自己紹介 + " **太字**" })}
-                                                        >
-                                                            B
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            title="斜体を挿入"
-                                                            className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
-                                                            onClick={() => setProfile({ ...profile, 自己紹介: profile.自己紹介 + " *斜体*" })}
-                                                        >
-                                                            I
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            title="リンク挿入"
-                                                            className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
-                                                            onClick={() => setProfile({ ...profile, 自己紹介: profile.自己紹介 + " [リンク名](https://example.com)" })}
-                                                        >
-                                                            🔗
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            title="インラインコードを挿入"
-                                                            className="px-2 py-1 rounded bg-purple-800 text-white text-sm font-mono"
-                                                            onClick={() => setProfile({ ...profile, 自己紹介: profile.自己紹介 + " `コード`" })}
-                                                        >
-                                                            {'</>'}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            title="見出しを挿入"
-                                                            className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
-                                                            onClick={() => setProfile({ ...profile, 自己紹介: profile.自己紹介 + "\n\n## 見出し" })}
-                                                        >
-                                                            H
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {key === "自己紹介" ? (
-                                                <Textarea
-                                                    value={profile[key as keyof Profile] as string}
-                                                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
-                                                    rows={6}
-                                                    className="mt-1"
-                                                    placeholder="自己紹介を入力してください"
-                                                />
-                                            ) : key === "学部" ? (
-                                                <select
-                                                    value={profile[key as keyof Profile] as string}
-                                                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
-                                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-700 focus:border-purple-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-                                                >
-                                                    {faculties.map((faculty) => (
-                                                        <option key={faculty} value={faculty}>
-                                                            {faculty}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            ) : (
-                                                <Input
-                                                    value={profile[key as keyof Profile] as string}
-                                                    onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
-                                                    placeholder={`${key}を入力してください`}
-                                                />
+                                {editFields.map((key) => (
+                                    <div
+                                        key={key}
+                                        className={key === "selfIntroduction" ? "md:col-span-2 space-y-2" : "space-y-2"}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <Label>{fieldLabels[key]}</Label>
+                                            {key === "selfIntroduction" && (
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        type="button"
+                                                        title="太字を挿入"
+                                                        className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
+                                                        onClick={() => setProfile({ ...profile, selfIntroduction: profile.selfIntroduction + " **太字**" })}
+                                                    >
+                                                        B
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="斜体を挿入"
+                                                        className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
+                                                        onClick={() => setProfile({ ...profile, selfIntroduction: profile.selfIntroduction + " *斜体*" })}
+                                                    >
+                                                        I
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="リンク挿入"
+                                                        className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
+                                                        onClick={() => setProfile({ ...profile, selfIntroduction: profile.selfIntroduction + " [リンク名](https://example.com)" })}
+                                                    >
+                                                        🔗
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="インラインコードを挿入"
+                                                        className="px-2 py-1 rounded bg-purple-800 text-white text-sm font-mono"
+                                                        onClick={() => setProfile({ ...profile, selfIntroduction: profile.selfIntroduction + " `コード`" })}
+                                                    >
+                                                        {'</>'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="見出しを挿入"
+                                                        className="px-2 py-1 rounded bg-purple-800 text-white text-sm"
+                                                        onClick={() => setProfile({ ...profile, selfIntroduction: profile.selfIntroduction + "\n\n## 見出し" })}
+                                                    >
+                                                        H
+                                                    </button>
+                                                </div>
                                             )}
+                                        </div>
 
+                                        {key === "selfIntroduction" ? (
+                                            <Textarea
+                                                value={profile[key]}
+                                                onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                                                rows={6}
+                                                className="mt-1"
+                                                placeholder="自己紹介を入力してください"
+                                            />
+                                        ) : key === "faculty" ? (
+                                            <select
+                                                value={profile[key]}
+                                                onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-700 focus:border-purple-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+                                            >
+                                                {faculties.map((f) => (
+                                                    <option key={f} value={f}>{f}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <Input
+                                                value={profile[key]}
+                                                onChange={(e) => setProfile({ ...profile, [key]: e.target.value })}
+                                                placeholder={`${fieldLabels[key]}を入力してください`}
+                                            />
+                                        )}
+
+                                        {visibilityKeyMap[key] !== undefined && (
                                             <div className="flex items-center space-x-2">
                                                 <Label>公開</Label>
                                                 <Switch
-                                                    checked={profile.公開設定[key as keyof Profile["公開設定"]]}
+                                                    checked={profile.visibility[visibilityKeyMap[key]!]}
                                                     onCheckedChange={(checked) =>
                                                         setProfile({
                                                             ...profile,
-                                                            公開設定: {
-                                                                ...profile.公開設定,
-                                                                [key]: checked,
+                                                            visibility: {
+                                                                ...profile.visibility,
+                                                                [visibilityKeyMap[key]!]: checked,
                                                             },
                                                         })
                                                     }
                                                 />
                                             </div>
-                                        </div>
-                                    ))}
+                                        )}
+                                    </div>
+                                ))}
+
+                                {/* SNS 公開設定 */}
+                                <div className="md:col-span-2 space-y-2">
+                                    <Label className="text-base font-semibold">SNS 公開設定</Label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {(["x", "instagram"] as const).map((sns) => (
+                                            <div key={sns} className="flex items-center space-x-2">
+                                                <Label>{sns === "x" ? "X" : "Instagram"}</Label>
+                                                <Switch
+                                                    checked={profile.visibility[sns]}
+                                                    onCheckedChange={(checked) =>
+                                                        setProfile({
+                                                            ...profile,
+                                                            visibility: { ...profile.visibility, [sns]: checked },
+                                                        })
+                                                    }
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {Object.keys(profile)
-                                    .filter((key) => key !== "公開設定")
-                                    .map((key) => (
-                                        profile.公開設定[key as keyof Profile["公開設定"]] || isEditing ? (
-                                            key === "名" && !isEditing ? null : (
-                                                <div
-                                                    key={key}
-                                                    className={key === "自己紹介" ? "md:col-span-2 space-y-2" : "space-y-2"}
-                                                >
-                                                    <Label>{!isEditing && key === "姓" ? "氏名" : key}</Label>
-                                                    {key === "自己紹介" ? (
-                                                        <ReactMarkdown>{profile[key as keyof Profile] as string}</ReactMarkdown>
-                                                    ) : !isEditing && key === "姓" ? (
-                                                        <p className="text-sm mt-1 whitespace-nowrap">
-                                                            {profile.姓} {profile.名}
-                                                        </p>
-                                                    ) : (
-                                                        <p className="text-sm mt-1">{profile[key as keyof Profile] as string}</p>
-                                                    )}
-                                                </div>
-                                            )
-                                        ) : null
-                                    ))}
+                                {editFields.map((key) => {
+                                    const visKey = visibilityKeyMap[key]
+                                    const isVisible = visKey !== undefined ? profile.visibility[visKey] : true
+                                    if (!isVisible && key !== "studentId" && key !== "nickname" && key !== "faculty") return null
+                                    if (key === "firstName") return null
+
+                                    return (
+                                        <div
+                                            key={key}
+                                            className={key === "selfIntroduction" ? "md:col-span-2 space-y-2" : "space-y-2"}
+                                        >
+                                            <Label>{key === "lastName" ? "氏名" : fieldLabels[key]}</Label>
+                                            {key === "selfIntroduction" ? (
+                                                <ReactMarkdown>{profile[key]}</ReactMarkdown>
+                                            ) : key === "lastName" ? (
+                                                <p className="text-sm mt-1 whitespace-nowrap">
+                                                    {profile.lastName} {profile.firstName}
+                                                </p>
+                                            ) : (
+                                                <p className="text-sm mt-1">{profile[key]}</p>
+                                            )}
+                                        </div>
+                                    )
+                                })}
                             </div>
                         )}
                     </CardContent>
                 </Card>
-                {/* Footer removed from here; site-wide footer is rendered in layout */}
             </div>
         </div>
     )
