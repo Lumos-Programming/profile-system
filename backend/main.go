@@ -68,7 +68,7 @@ func setupAPIServer(client *firestore.Client, cfg *config.Config) *gin.Engine {
 	h := handler.NewHandler(client, cfg.LINE)
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
+		c.Header("Access-Control-Allow-Origin", "*")
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Content-Type")
 	})
