@@ -5,6 +5,11 @@ on:
       - main
     paths:
       - "backend/**/*.go"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**/*.go"
 
 jobs:
   go-fmt:
