@@ -59,6 +59,35 @@ type LineUser struct {
 	UserId string `json:"user_id"`
 }
 
+// MemberCreate defines model for MemberCreate.
+type MemberCreate struct {
+	Accounts struct {
+		Discord bool `json:"discord"`
+		Github  bool `json:"github"`
+		Line    bool `json:"line"`
+	} `json:"accounts"`
+	Avatar *string `json:"avatar,omitempty"`
+
+	// Bio Markdown形式の自己紹介
+	Bio        string `json:"bio"`
+	Department string `json:"department"`
+	Links      *[]struct {
+		Title string `json:"title"`
+		Url   string `json:"url"`
+	} `json:"links,omitempty"`
+	Name     string   `json:"name"`
+	Nickname string   `json:"nickname"`
+	Roles    []string `json:"roles"`
+	Year     string   `json:"year"`
+}
+
+// MemberCreateResponse defines model for MemberCreateResponse.
+type MemberCreateResponse struct {
+	// Id 登録されたメンバーのID
+	Id      string `json:"id"`
+	Message string `json:"message"`
+}
+
 // MemberDetail defines model for MemberDetail.
 type MemberDetail struct {
 	Accounts struct {
@@ -122,6 +151,9 @@ type GetApiLineOauthParams struct {
 	State *string `form:"state,omitempty" json:"state,omitempty"`
 }
 
+// PostApiMembersJSONRequestBody defines body for PostApiMembers for application/json ContentType.
+type PostApiMembersJSONRequestBody = MemberCreate
+
 // PutApiProfileBasicInfoJSONRequestBody defines body for PutApiProfileBasicInfo for application/json ContentType.
 type PutApiProfileBasicInfoJSONRequestBody = BasicInfo
 
@@ -133,6 +165,9 @@ type ServerInterface interface {
 	// メンバー一覧を取得する
 	// (GET /api/members)
 	GetApiMembers(c *gin.Context)
+	// メンバーを登録する
+	// (POST /api/members)
+	PostApiMembers(c *gin.Context)
 	// メンバー詳細を取得する
 	// (GET /api/members/{id})
 	GetApiMembersId(c *gin.Context, id string)
@@ -205,6 +240,19 @@ func (siw *ServerInterfaceWrapper) GetApiMembers(c *gin.Context) {
 	}
 
 	siw.Handler.GetApiMembers(c)
+}
+
+// PostApiMembers operation middleware
+func (siw *ServerInterfaceWrapper) PostApiMembers(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostApiMembers(c)
 }
 
 // GetApiMembersId operation middleware
@@ -286,6 +334,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/api/line-oauth", wrapper.GetApiLineOauth)
 	router.GET(options.BaseURL+"/api/members", wrapper.GetApiMembers)
+	router.POST(options.BaseURL+"/api/members", wrapper.PostApiMembers)
 	router.GET(options.BaseURL+"/api/members/:id", wrapper.GetApiMembersId)
 	router.GET(options.BaseURL+"/api/profile/basic-info", wrapper.GetApiProfileBasicInfo)
 	router.PUT(options.BaseURL+"/api/profile/basic-info", wrapper.PutApiProfileBasicInfo)

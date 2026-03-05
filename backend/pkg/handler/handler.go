@@ -12,6 +12,7 @@ import (
 	"cloud.google.com/go/firestore"
 	"github.com/Lumos-Programming/profile-system-backend/api"
 	"github.com/Lumos-Programming/profile-system-backend/pkg/config"
+	"github.com/Lumos-Programming/profile-system-backend/pkg/service"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -26,15 +27,17 @@ type Handler struct {
 	fs         *firestore.Client
 	httpClient *http.Client
 	lineCfg    config.LINE
+	membersSvc *service.MembersService
 }
 
-func NewHandler(f *firestore.Client, lineCfg config.LINE) *Handler {
+func NewHandler(f *firestore.Client, lineCfg config.LINE, membersSvc *service.MembersService) *Handler {
 	return &Handler{
 		fs: f,
 		httpClient: &http.Client{
 			Timeout: 10 * time.Second,
 		},
-		lineCfg: lineCfg,
+		lineCfg:    lineCfg,
+		membersSvc: membersSvc,
 	}
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/Lumos-Programming/profile-system-backend/api"
 	"github.com/Lumos-Programming/profile-system-backend/pkg/config"
 	"github.com/Lumos-Programming/profile-system-backend/pkg/handler"
+	"github.com/Lumos-Programming/profile-system-backend/pkg/service"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/api/option"
@@ -65,7 +66,8 @@ func main() {
 }
 
 func setupAPIServer(client *firestore.Client, cfg *config.Config) *gin.Engine {
-	h := handler.NewHandler(client, cfg.LINE)
+	membersSvc := service.NewMembersService(client)
+	h := handler.NewHandler(client, cfg.LINE, membersSvc)
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "http://localhost:3000")
