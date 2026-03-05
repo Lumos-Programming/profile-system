@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -8,15 +8,20 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { MessageSquare, Github } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
-interface Member {
+// API から返ってくる一覧用の型（MemberSummary）
+interface MemberSummary {
   id: string
   name: string
   nickname: string
+  roles: string[]
+  avatar?: string
+}
+
+// API から返ってくる詳細用の型（MemberDetail）
+interface MemberDetail extends MemberSummary {
   department: string
   year: string
-  roles: string[]
   bio: string
-  avatar?: string
   accounts: {
     line: boolean
     discord: boolean
@@ -33,110 +38,78 @@ interface Member {
   }>
 }
 
-const mockMembers: Member[] = [
-  {
-    id: "1",
-    name: "田中 太郎",
-    nickname: "たなたろ",
-    department: "情報工学部",
-    year: "2年生",
-    roles: ["Web班", "副代表"],
-    bio: `# 自己紹介
-
-プログラミングが好きな2年生です！
-
-## 興味のある分野
-- **Webアプリ開発**
-- **機械学習**
-- **UI/UXデザイン**
-
-よろしくお願いします！ 🚀`,
-    accounts: { line: true, discord: true, github: true },
-    links: [
-      { title: "個人ブログ", url: "https://tanaka-blog.com" },
-      { title: "ポートフォリオ", url: "https://tanaka-portfolio.dev" },
-    ],
-    events: [
-      { name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" },
-      { name: "冬合宿", date: "2024-02-10", status: "completed" },
-    ],
-  },
-  {
-    id: "2",
-    name: "佐藤 花子",
-    nickname: "さとはな",
-    department: "経済学部",
-    year: "3年生",
-    roles: ["イベント班", "代表"],
-    bio: "イベント企画が大好きです！みんなで楽しい思い出を作りましょう✨",
-    accounts: { line: true, discord: true, github: false },
-    links: [],
-    events: [{ name: "文化祭出展準備", date: "2024-05-01", status: "upcoming" }],
-  },
-  {
-    id: "3",
-    name: "山田 次郎",
-    nickname: "やまじ",
-    department: "理学部",
-    year: "1年生",
-    roles: ["新入生"],
-    bio: "新入生です！よろしくお願いします🌟",
-    accounts: { line: true, discord: true, github: false },
-    links: [],
-    events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
-  },
-  {
-    id: "4",
-    name: "鈴木 一郎",
-    nickname: "すずいち",
-    department: "情報工学部",
-    year: "1年生",
-    roles: ["新入生"],
-    bio: "プログラミング初心者ですが、頑張ります！",
-    accounts: { line: true, discord: true, github: true },
-    links: [],
-    events: [{ name: "新歓BBQ大会", date: "2024-04-15", status: "upcoming" }],
-  },
-  {
-    id: "5",
-    name: "高橋 美咲",
-    nickname: "みさき",
-    department: "経済学部",
-    year: "2年生",
-    roles: ["広報班"],
-    bio: "SNS運用とデザインが得意です📱",
-    accounts: { line: true, discord: true, github: false },
-    links: [{ title: "Instagram", url: "https://instagram.com/misaki" }],
-    events: [],
-  },
-  {
-    id: "6",
-    name: "伊藤 健太",
-    nickname: "けんた",
-    department: "情報工学部",
-    year: "4年生",
-    roles: ["4年生", "技術顧問"],
-    bio: "卒業研究でAI開発をしています。技術的な質問はお気軽に！",
-    accounts: { line: true, discord: true, github: true },
-    links: [{ title: "研究室ページ", url: "https://lab.example.com" }],
-    events: [],
-  },
-]
+const API_BASE_URL = "http://localhost:8080"
 
 export default function MemberList() {
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
+  const [members, setMembers] = useState<MemberSummary[]>([])
+  const [selectedMember, setSelectedMember] = useState<MemberDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredMembers = mockMembers
+  // 一覧を取得
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/members`)
+      .then((res) => {
+        if (!res.ok) throw new Error("メンバー一覧の取得に失敗しました")
+        return res.json()
+      })
+      .then((data) => {
+        setMembers(data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
+  }, [])
+
+  // 詳細を取得
+  const handleMemberClick = async (memberId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/members/${memberId}`)
+      if (!res.ok) throw new Error("メンバー詳細の取得に失敗しました")
+      const data = await res.json()
+      setSelectedMember(data)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <span className="ml-3 text-gray-600 dark:text-gray-400">読み込み中...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">{error}</p>
+        <p className="text-gray-500 mt-2">バックエンドサーバーが起動しているか確認してください</p>
+      </div>
+    )
+  }
+
+  if (members.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">メンバーが登録されていません</p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
       {/* メンバーカード一覧 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {filteredMembers.map((member) => (
+        {members.map((member) => (
           <Card
             key={member.id}
             className="border-0 shadow-md bg-white/80 backdrop-blur-sm hover:shadow-lg transition-all cursor-pointer hover:scale-105 dark:bg-gray-800/80 dark:border-gray-700"
-            onClick={() => setSelectedMember(member)}
+            onClick={() => handleMemberClick(member.id)}
           >
             <CardContent className="p-4 text-center">
               <Avatar className="w-12 h-12 mx-auto mb-3">
@@ -148,12 +121,12 @@ export default function MemberList() {
               <h3 className="font-medium text-sm truncate mb-1 dark:text-gray-100">{member.name}</h3>
               <p className="text-xs text-gray-600 mb-2 dark:text-gray-400">@{member.nickname}</p>
               <div className="flex flex-wrap gap-1 justify-center">
-                {member.roles.slice(0, 2).map((role) => (
+                {(member.roles ?? []).slice(0, 2).map((role) => (
                   <Badge key={role} variant="secondary" className="text-xs px-1 py-0">
                     {role}
                   </Badge>
                 ))}
-                {member.roles.length > 2 && (
+                {(member.roles ?? []).length > 2 && (
                   <Badge variant="secondary" className="text-xs px-1 py-0">
                     +{member.roles.length - 2}
                   </Badge>
@@ -201,7 +174,7 @@ export default function MemberList() {
                 <div className="space-y-2">
                   <h4 className="font-medium text-gray-800 dark:text-gray-200">ロール</h4>
                   <div className="flex flex-wrap gap-2">
-                    {selectedMember.roles.map((role) => (
+                    {(selectedMember.roles ?? []).map((role) => (
                       <Badge key={role} variant="secondary">
                         {role}
                       </Badge>
