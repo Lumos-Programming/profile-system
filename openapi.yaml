@@ -56,6 +56,26 @@ paths:
                   $ref: '#/components/schemas/MemberSummary'
         '500':
           description: サーバーエラー
+    post:
+      summary: メンバーを登録する
+      description: 新しいメンバーを登録します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberCreate'
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemberCreateResponse'
+        '400':
+          description: バリデーションエラー
+        '500':
+          description: サーバーエラー
 
   /api/members/{id}:
     get:
@@ -322,3 +342,81 @@ components:
           type: string
           description: ステータスメッセージ
           example: いつでも連絡ください
+    MemberCreate:
+      type: object
+      required:
+        - name
+        - nickname
+        - department
+        - year
+        - bio
+        - roles
+        - accounts
+      properties:
+        name:
+          type: string
+          example: "田中 太郎"
+        nickname:
+          type: string
+          example: "たなたろ"
+        department:
+          type: string
+          example: "情報工学部"
+        year:
+          type: string
+          example: "2年生"
+        bio:
+          type: string
+          description: Markdown形式の自己紹介
+          example: "プログラミングが好きな2年生です！"
+        roles:
+          type: array
+          items:
+            type: string
+          example: ["Web班", "副代表"]
+        avatar:
+          type: string
+          example: "https://example.com/avatar.jpg"
+        accounts:
+          type: object
+          required:
+            - line
+            - discord
+            - github
+          properties:
+            line:
+              type: boolean
+              example: true
+            discord:
+              type: boolean
+              example: true
+            github:
+              type: boolean
+              example: false
+        links:
+          type: array
+          items:
+            type: object
+            required:
+              - title
+              - url
+            properties:
+              title:
+                type: string
+                example: "個人ブログ"
+              url:
+                type: string
+                example: "https://example.com"
+    MemberCreateResponse:
+      type: object
+      required:
+        - id
+        - message
+      properties:
+        id:
+          type: string
+          description: 登録されたメンバーのID
+          example: "abc123"
+        message:
+          type: string
+          example: "メンバーを登録しました"

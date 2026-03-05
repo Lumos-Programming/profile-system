@@ -26,6 +26,10 @@ import type { BasicInfo } from '../models';
 // @ts-ignore
 import type { LineOAuthResponse } from '../models';
 // @ts-ignore
+import type { MemberCreate } from '../models';
+// @ts-ignore
+import type { MemberCreateResponse } from '../models';
+// @ts-ignore
 import type { MemberDetail } from '../models';
 // @ts-ignore
 import type { MemberSummary } from '../models';
@@ -137,6 +141,42 @@ export const DefaultApiAxiosParamCreator = function (configuration?: Configurati
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 新しいメンバーを登録します。
+         * @summary メンバーを登録する
+         * @param {MemberCreate} memberCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersPost: async (memberCreate: MemberCreate, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'memberCreate' is not null or undefined
+            assertParamExists('apiMembersPost', 'memberCreate', memberCreate)
+            const localVarPath = `/api/members`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(memberCreate, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -259,6 +299,19 @@ export const DefaultApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * 新しいメンバーを登録します。
+         * @summary メンバーを登録する
+         * @param {MemberCreate} memberCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async apiMembersPost(memberCreate: MemberCreate, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<MemberCreateResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.apiMembersPost(memberCreate, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DefaultApi.apiMembersPost']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * 現在登録されているユーザーの基本情報を返します。
          * @summary 基本情報を取得する
          * @param {*} [options] Override http request option.
@@ -324,6 +377,16 @@ export const DefaultApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.apiMembersIdGet(id, options).then((request) => request(axios, basePath));
         },
         /**
+         * 新しいメンバーを登録します。
+         * @summary メンバーを登録する
+         * @param {MemberCreate} memberCreate 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        apiMembersPost(memberCreate: MemberCreate, options?: RawAxiosRequestConfig): AxiosPromise<MemberCreateResponse> {
+            return localVarFp.apiMembersPost(memberCreate, options).then((request) => request(axios, basePath));
+        },
+        /**
          * 現在登録されているユーザーの基本情報を返します。
          * @summary 基本情報を取得する
          * @param {*} [options] Override http request option.
@@ -386,6 +449,18 @@ export class DefaultApi extends BaseAPI {
      */
     public apiMembersIdGet(id: string, options?: RawAxiosRequestConfig) {
         return DefaultApiFp(this.configuration).apiMembersIdGet(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 新しいメンバーを登録します。
+     * @summary メンバーを登録する
+     * @param {MemberCreate} memberCreate 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof DefaultApi
+     */
+    public apiMembersPost(memberCreate: MemberCreate, options?: RawAxiosRequestConfig) {
+        return DefaultApiFp(this.configuration).apiMembersPost(memberCreate, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
