@@ -201,6 +201,7 @@ func (h *Handler) PostApiMembers(c *gin.Context) {
 		Message: "メンバーを登録しました",
 	})
 }
+
 // 	if a, ok := v.([]any); ok {
 // 		out := make([]string, 0, len(a))
 // 		for _, x := range a {
