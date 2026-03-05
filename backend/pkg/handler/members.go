@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	api "github.com/Lumos-Programming/profile-system-backend/api"
+	"github.com/Lumos-Programming/profile-system-backend/pkg/service"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/api/iterator"
 	"google.golang.org/grpc/codes"
@@ -171,6 +172,35 @@ func (h *Handler) GetApiMembersId(c *gin.Context, id string) {
 // 	if v == nil {
 // 		return []string{}
 // 	}
+
+// PostApiMembers は新しいメンバーを登録する。
+func (h *Handler) PostApiMembers(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// --- ① リクエストボディをパース ---
+	var req api.MemberCreate
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// --- ② api.MemberCreate を service.Member に変換 ---
+	member := service.MemberFromAPICreate(req)
+
+	// --- ③ Service層に登録を依頼 ---
+	id, err := h.membersSvc.Register(ctx, member)
+	if err != nil {
+		slog.Error("failed to register member", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// --- ④ 成功レスポンス ---
+	c.JSON(http.StatusCreated, api.MemberCreateResponse{
+		Id:      id,
+		Message: "メンバーを登録しました",
+	})
+}
 // 	if a, ok := v.([]any); ok {
 // 		out := make([]string, 0, len(a))
 // 		for _, x := range a {
