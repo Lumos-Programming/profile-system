@@ -7,6 +7,7 @@ All URIs are relative to *http://localhost:8080*
 |[**apiLineOauthGet**](#apilineoauthget) | **GET** /api/line-oauth | LINE OAuthコールバック|
 |[**apiMembersGet**](#apimembersget) | **GET** /api/members | メンバー一覧を取得する|
 |[**apiMembersIdGet**](#apimembersidget) | **GET** /api/members/{id} | メンバー詳細を取得する|
+|[**apiMembersPost**](#apimemberspost) | **POST** /api/members | メンバーを登録する|
 |[**apiProfileBasicInfoGet**](#apiprofilebasicinfoget) | **GET** /api/profile/basic-info | 基本情報を取得する|
 |[**apiProfileBasicInfoPut**](#apiprofilebasicinfoput) | **PUT** /api/profile/basic-info | 基本情報を更新する|
 
@@ -160,6 +161,60 @@ No authorization required
 |-------------|-------------|------------------|
 |**200** | 取得成功 |  -  |
 |**404** | メンバーが見つかりません |  -  |
+|**500** | サーバーエラー |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **apiMembersPost**
+> MemberCreateResponse apiMembersPost(memberCreate)
+
+新しいメンバーを登録します。
+
+### Example
+
+```typescript
+import {
+    DefaultApi,
+    Configuration,
+    MemberCreate
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new DefaultApi(configuration);
+
+let memberCreate: MemberCreate; //
+
+const { status, data } = await apiInstance.apiMembersPost(
+    memberCreate
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **memberCreate** | **MemberCreate**|  | |
+
+
+### Return type
+
+**MemberCreateResponse**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**201** | 登録成功 |  -  |
+|**400** | バリデーションエラー |  -  |
 |**500** | サーバーエラー |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
